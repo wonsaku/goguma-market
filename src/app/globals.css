@@ -1,0 +1,93 @@
+@import "tailwindcss";
+
+:root {
+  --goguma-orange: #C4611A;
+  --goguma-orange-light: #E8863A;
+  --goguma-purple: #7B4F8C;
+  --goguma-purple-light: #A67DB8;
+  --goguma-brown: #5C3D1E;
+  --goguma-cream: #FDF6EC;
+  --goguma-warm: #F4E4C1;
+  --goguma-text: #3D2B1F;
+  --background: var(--goguma-cream);
+  --foreground: var(--goguma-text);
+}
+
+body {
+  background-color: var(--goguma-cream);
+  color: var(--goguma-text);
+  font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+}
+
+.goguma-gradient {
+  background: linear-gradient(135deg, #C4611A 0%, #7B4F8C 100%);
+}
+
+.goguma-card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 2px 16px rgba(92, 61, 30, 0.08);
+  border: 1px solid #F0E0C8;
+}
+
+.goguma-input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1.5px solid #E8D4B8;
+  border-radius: 10px;
+  background: white;
+  color: var(--goguma-text);
+  font-size: 15px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  outline: none;
+}
+
+.goguma-input:focus {
+  border-color: var(--goguma-orange);
+  box-shadow: 0 0 0 3px rgba(196, 97, 26, 0.12);
+}
+
+.goguma-btn-primary {
+  width: 100%;
+  padding: 13px;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  color: white;
+  background: linear-gradient(135deg, #C4611A 0%, #7B4F8C 100%);
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.1s;
+}
+
+.goguma-btn-primary:hover {
+  opacity: 0.9;
+}
+
+.goguma-btn-primary:active {
+  transform: scale(0.98);
+}
+
+.goguma-btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+.float-animation {
+  animation: float 3.5s ease-in-out infinite;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+  animation: fadeIn 0.4s ease-out;
+}
