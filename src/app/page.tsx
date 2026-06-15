@@ -1,74 +1,80 @@
 import Header from '@/components/Header'
+import ProductCard, { type Product } from '@/components/ProductCard'
+import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 
-export default function Home() {
+const CATEGORIES = ['전체', '디지털/가전', '의류/패션', '도서/음반', '스포츠/레저', '가구/인테리어', '생활/주방', '게임/취미', '기타']
+
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<{ category?: string }>
+}) {
+  const { category } = await searchParams
+  const supabase = await createClient()
+
+  let query = supabase
+    .from('products')
+    .select('id, title, price, category, location, status, created_at, profiles(nickname)')
+    .order('created_at', { ascending: false })
+    .limit(40)
+
+  if (category && category !== '전체') {
+    query = query.eq('category', category)
+  }
+
+  const { data: products } = await query
+
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
 
-      {/* 히어로 섹션 */}
-      <main className="flex-1">
-        <section className="goguma-gradient py-20 px-4 text-center text-white">
-          <div className="max-w-2xl mx-auto">
-            <div className="text-6xl mb-6 float-animation inline-block">🍠</div>
-            <h1 className="text-3xl sm:text-4xl font-bold mb-4 leading-tight">
-              우리 동네 따뜻한<br />중고거래
-            </h1>
-            <p className="text-lg opacity-90 mb-8">
-              고구마마켓에서 이웃과 안전하게 거래하세요
+      <main className="flex-1 max-w-2xl mx-auto w-full px-4 py-6">
+        {/* 카테고리 탭 */}
+        <div className="flex gap-2 overflow-x-auto pb-2 mb-5 scrollbar-hide">
+          {CATEGORIES.map((cat) => {
+            const isActive = (!category && cat === '전체') || category === cat
+            return (
+              <Link
+                key={cat}
+                href={cat === '전체' ? '/' : `/?category=${encodeURIComponent(cat)}`}
+                className="flex-shrink-0 px-3.5 py-1.5 rounded-full text-sm font-medium border transition-colors"
+                style={
+                  isActive
+                    ? { background: 'var(--goguma-orange)', color: 'white', borderColor: 'var(--goguma-orange)' }
+                    : { background: 'white', color: 'var(--goguma-brown)', borderColor: '#E8D4B8' }
+                }
+              >
+                {cat}
+              </Link>
+            )
+          })}
+        </div>
+
+        {/* 상품 목록 */}
+        {products && products.length > 0 ? (
+          <div className="flex flex-col gap-3 fade-in">
+            {(products as unknown as Product[]).map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-24 text-center fade-in">
+            <div className="text-5xl mb-4 float-animation">🍠</div>
+            <p className="font-semibold text-lg mb-1" style={{ color: 'var(--goguma-brown)' }}>
+              아직 등록된 상품이 없어요
             </p>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Link
-                href="/signup"
-                className="px-8 py-3 bg-white rounded-full font-semibold text-base transition-transform hover:scale-105"
-                style={{ color: 'var(--goguma-orange)' }}
-              >
-                시작하기
-              </Link>
-              <Link
-                href="/login"
-                className="px-8 py-3 border-2 border-white rounded-full font-semibold text-base text-white transition-transform hover:scale-105 hover:bg-white/10"
-              >
-                로그인
-              </Link>
-            </div>
+            <p className="text-sm mb-6" style={{ color: '#B09080' }}>
+              첫 번째 판매글을 올려보세요!
+            </p>
+            <Link
+              href="/sell"
+              className="px-6 py-2.5 rounded-full text-sm font-semibold text-white goguma-gradient"
+            >
+              판매글 작성하기
+            </Link>
           </div>
-        </section>
-
-        {/* 특징 소개 */}
-        <section className="py-16 px-4">
-          <div className="max-w-4xl mx-auto">
-            <h2 className="text-center text-2xl font-bold mb-12" style={{ color: 'var(--goguma-brown)' }}>
-              왜 고구마마켓인가요?
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-              {features.map((f) => (
-                <div key={f.title} className="goguma-card p-6 text-center fade-in">
-                  <div className="text-4xl mb-4">{f.emoji}</div>
-                  <h3 className="font-bold text-lg mb-2" style={{ color: 'var(--goguma-brown)' }}>
-                    {f.title}
-                  </h3>
-                  <p className="text-sm leading-relaxed" style={{ color: '#7A6050' }}>
-                    {f.desc}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* CTA */}
-        <section className="py-12 px-4 text-center" style={{ background: 'var(--goguma-warm)' }}>
-          <p className="text-lg font-semibold mb-4" style={{ color: 'var(--goguma-brown)' }}>
-            지금 바로 시작해보세요 🍠
-          </p>
-          <Link
-            href="/signup"
-            className="inline-block px-10 py-3 rounded-full font-bold text-white goguma-gradient transition-opacity hover:opacity-90"
-          >
-            무료 회원가입
-          </Link>
-        </section>
+        )}
       </main>
 
       <footer className="py-6 text-center text-sm" style={{ color: '#B09080', borderTop: '1px solid #F0E0C8' }}>
@@ -77,21 +83,3 @@ export default function Home() {
     </div>
   )
 }
-
-const features = [
-  {
-    emoji: '🤝',
-    title: '안전한 거래',
-    desc: '이웃 간의 신뢰를 바탕으로 안심하고 거래할 수 있어요.',
-  },
-  {
-    emoji: '📍',
-    title: '우리 동네',
-    desc: '가까운 이웃과 직거래로 배송비 걱정 없이 편리하게!',
-  },
-  {
-    emoji: '♻️',
-    title: '가치 있는 나눔',
-    desc: '쓰지 않는 물건에 새 생명을 불어넣어 환경도 지켜요.',
-  },
-]

@@ -42,6 +42,12 @@ export default function Header() {
         <nav className="flex items-center gap-3">
           {loading ? null : user ? (
             <>
+              <Link
+                href="/sell"
+                className="px-4 py-1.5 rounded-full text-sm font-semibold text-white goguma-gradient transition-opacity hover:opacity-90"
+              >
+                + 판매하기
+              </Link>
               <span className="text-sm hidden sm:block" style={{ color: 'var(--goguma-brown)' }}>
                 {user.email?.split('@')[0]}님
               </span>
