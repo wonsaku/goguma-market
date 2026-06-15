@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import DeleteButton from './DeleteButton'
+import OwnerActions from './OwnerActions'
 
 function timeAgo(dateStr: string) {
   const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000)
@@ -174,9 +174,7 @@ export default async function ProductDetailPage({
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#F0E0C8] px-4 py-3 z-40">
         <div className="max-w-2xl mx-auto">
           {isOwner ? (
-            <div className="flex gap-2">
-              <DeleteButton productId={id} />
-            </div>
+            <OwnerActions productId={id} />
           ) : (
             <div className="flex items-center gap-3">
               <div>
