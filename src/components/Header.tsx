@@ -34,10 +34,15 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-50 bg-white border-b border-[#F0E0C8] shadow-sm">
       <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2 font-bold text-xl" style={{ color: 'var(--goguma-orange)' }}>
-          <span className="text-2xl">🍠</span>
-          <span>고구마마켓</span>
-        </Link>
+        <div className="flex items-center gap-4">
+          <Link href="/" className="flex items-center gap-2 font-bold text-xl" style={{ color: 'var(--goguma-orange)' }}>
+            <span className="text-2xl">🍠</span>
+            <span>고구마마켓</span>
+          </Link>
+          <Link href="/products" className="hidden sm:block text-sm font-medium hover:underline" style={{ color: 'var(--goguma-brown)' }}>
+            중고거래
+          </Link>
+        </div>
 
         <nav className="flex items-center gap-3">
           {loading ? null : user ? (
