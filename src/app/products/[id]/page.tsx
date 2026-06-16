@@ -4,6 +4,7 @@ import Link from 'next/link'
 import OwnerActions from './OwnerActions'
 import ProductImages from './ProductImages'
 import LikeButton from '@/components/LikeButton'
+import CommentsSection from './CommentsSection'
 
 function timeAgo(dateStr: string) {
   const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000)
@@ -53,10 +54,20 @@ export default async function ProductDetailPage({
   const { data: { user } } = await supabase.auth.getUser()
   const isOwner = user?.id === product.user_id
 
-  // 현재 사용자의 좋아요 여부 확인
-  const isLiked = user
-    ? !!(await supabase.from('likes').select('id').eq('user_id', user.id).eq('product_id', id).maybeSingle()).data
-    : false
+  // 현재 사용자의 좋아요 여부 + 댓글 목록 병렬 조회
+  const [likeResult, commentsResult] = await Promise.all([
+    user
+      ? supabase.from('likes').select('id').eq('user_id', user.id).eq('product_id', id).maybeSingle()
+      : Promise.resolve({ data: null }),
+    supabase
+      .from('comments')
+      .select('id, user_id, content, created_at, updated_at, profiles(nickname)')
+      .eq('product_id', id)
+      .order('created_at', { ascending: true }),
+  ])
+
+  const isLiked = !!likeResult.data
+  const comments = commentsResult.data ?? []
 
   const { data: otherProducts } = await supabase
     .from('products')
@@ -148,6 +159,13 @@ export default async function ProductDetailPage({
               </p>
             )}
           </div>
+
+          {/* 댓글 섹션 */}
+          <CommentsSection
+            productId={id}
+            currentUserId={user?.id ?? null}
+            initialComments={comments as Parameters<typeof CommentsSection>[0]['initialComments']}
+          />
 
           {/* 판매자의 다른 상품 */}
           {otherProducts && otherProducts.length > 0 && (
