@@ -4,6 +4,12 @@ import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import ImageUploader, {
+  makeInitialImageState,
+  uploadImages,
+  deleteImages,
+  type ImageState,
+} from '@/components/ImageUploader'
 
 const CATEGORIES = ['디지털/가전', '의류/패션', '도서/음반', '스포츠/레저', '가구/인테리어', '생활/주방', '게임/취미', '기타']
 const STATUS_OPTIONS = [
@@ -24,6 +30,7 @@ export default function EditProductPage() {
   const [category, setCategory] = useState('기타')
   const [location, setLocation] = useState('')
   const [status, setStatus] = useState('available')
+  const [imageState, setImageState] = useState<ImageState>(makeInitialImageState())
 
   const [pageLoading, setPageLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
@@ -49,6 +56,7 @@ export default function EditProductPage() {
       setCategory(product.category)
       setLocation(product.location ?? '')
       setStatus(product.status)
+      setImageState(makeInitialImageState(product.image_urls ?? []))
       setPageLoading(false)
     }
     load()
@@ -75,27 +83,37 @@ export default function EditProductPage() {
 
     setSubmitting(true)
 
-    const { error: updateError } = await supabase
-      .from('products')
-      .update({
-        title: title.trim(),
-        description: description.trim(),
-        price: parsedPrice,
-        category,
-        location: location.trim(),
-        status,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', id)
+    try {
+      // 삭제된 이미지를 Storage에서 제거
+      await deleteImages(supabase, imageState.deletedUrls)
 
-    if (updateError) {
+      // 새 이미지 업로드
+      const { data: { user } } = await supabase.auth.getUser()
+      const uploadedUrls = await uploadImages(supabase, user!.id, imageState.newFiles)
+      const finalImageUrls = [...imageState.remainingUrls, ...uploadedUrls]
+
+      const { error: updateError } = await supabase
+        .from('products')
+        .update({
+          title: title.trim(),
+          description: description.trim(),
+          price: parsedPrice,
+          category,
+          location: location.trim(),
+          status,
+          image_urls: finalImageUrls,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', id)
+
+      if (updateError) throw updateError
+
+      router.push(`/products/${id}`)
+      router.refresh()
+    } catch {
       setError('수정 중 오류가 발생했어요. 다시 시도해주세요.')
       setSubmitting(false)
-      return
     }
-
-    router.push(`/products/${id}`)
-    router.refresh()
   }
 
   if (pageLoading) {
@@ -121,6 +139,18 @@ export default function EditProductPage() {
 
       <main className="max-w-2xl mx-auto px-4 py-6 fade-in">
         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+
+          {/* 사진 */}
+          <div className="goguma-card p-5">
+            <label className="block text-sm font-semibold mb-3" style={{ color: 'var(--goguma-brown)' }}>
+              사진
+            </label>
+            <ImageUploader
+              state={imageState}
+              onChange={setImageState}
+              maxImages={5}
+            />
+          </div>
 
           {/* 판매 상태 */}
           <div className="goguma-card p-5">

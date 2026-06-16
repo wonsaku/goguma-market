@@ -8,6 +8,7 @@ export type Product = {
   location: string | null
   status: string
   created_at: string
+  image_urls?: string[] | null
   profiles: {
     nickname: string
   } | null
@@ -21,19 +22,43 @@ function timeAgo(dateStr: string) {
   return `${Math.floor(diff / 86400)}일 전`
 }
 
+function getCategoryEmoji(category: string) {
+  const map: Record<string, string> = {
+    '디지털/가전': '📱',
+    '의류/패션': '👗',
+    '도서/음반': '📚',
+    '스포츠/레저': '⚽',
+    '가구/인테리어': '🪑',
+    '생활/주방': '🍳',
+    '게임/취미': '🎮',
+    '기타': '📦',
+  }
+  return map[category] ?? '📦'
+}
+
 export default function ProductCard({ product }: { product: Product }) {
   const isSold = product.status === 'sold'
   const isReserved = product.status === 'reserved'
+  const thumb = product.image_urls?.[0]
 
   return (
     <Link href={`/products/${product.id}`} className="block">
       <div className="goguma-card p-4 flex gap-4 hover:shadow-md transition-shadow">
-        {/* 이미지 자리 */}
+        {/* 썸네일 */}
         <div
-          className="w-24 h-24 rounded-xl flex-shrink-0 flex items-center justify-center text-3xl"
+          className="w-24 h-24 rounded-xl flex-shrink-0 flex items-center justify-center overflow-hidden"
           style={{ background: 'var(--goguma-warm)' }}
         >
-          {getCategoryEmoji(product.category)}
+          {thumb ? (
+            <img
+              src={thumb}
+              alt={product.title}
+              className="w-full h-full object-cover"
+              style={{ opacity: isSold ? 0.5 : 1 }}
+            />
+          ) : (
+            <span className="text-3xl">{getCategoryEmoji(product.category)}</span>
+          )}
         </div>
 
         {/* 정보 */}
@@ -77,18 +102,4 @@ export default function ProductCard({ product }: { product: Product }) {
       </div>
     </Link>
   )
-}
-
-function getCategoryEmoji(category: string) {
-  const map: Record<string, string> = {
-    '디지털/가전': '📱',
-    '의류/패션': '👗',
-    '도서/음반': '📚',
-    '스포츠/레저': '⚽',
-    '가구/인테리어': '🪑',
-    '생활/주방': '🍳',
-    '게임/취미': '🎮',
-    '기타': '📦',
-  }
-  return map[category] ?? '📦'
 }

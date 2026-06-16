@@ -27,7 +27,7 @@ export default async function ProductsPage({
 
   let query = supabase
     .from('products')
-    .select('id, title, price, category, location, status, created_at, profiles(nickname)')
+    .select('id, title, price, category, location, status, created_at, image_urls, profiles(nickname)')
     .limit(60)
 
   if (category && category !== '전체') {

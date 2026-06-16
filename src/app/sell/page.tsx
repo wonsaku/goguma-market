@@ -5,6 +5,11 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
+import ImageUploader, {
+  makeInitialImageState,
+  uploadImages,
+  type ImageState,
+} from '@/components/ImageUploader'
 
 const CATEGORIES = [
   '디지털/가전',
@@ -29,6 +34,7 @@ export default function SellPage() {
   const [price, setPrice] = useState('')
   const [category, setCategory] = useState('기타')
   const [location, setLocation] = useState('')
+  const [imageState, setImageState] = useState<ImageState>(makeInitialImageState())
 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -56,26 +62,32 @@ export default function SellPage() {
 
     setLoading(true)
 
-    const { data, error: insertError } = await supabase
-      .from('products')
-      .insert({
-        user_id: user!.id,
-        title: title.trim(),
-        description: description.trim(),
-        price: parsedPrice,
-        category,
-        location: location.trim(),
-      })
-      .select('id')
-      .single()
+    try {
+      // 이미지 업로드
+      const uploadedUrls = await uploadImages(supabase, user!.id, imageState.newFiles)
+      const imageUrls = [...imageState.remainingUrls, ...uploadedUrls]
 
-    if (insertError) {
+      const { error: insertError } = await supabase
+        .from('products')
+        .insert({
+          user_id: user!.id,
+          title: title.trim(),
+          description: description.trim(),
+          price: parsedPrice,
+          category,
+          location: location.trim(),
+          image_urls: imageUrls,
+        })
+        .select('id')
+        .single()
+
+      if (insertError) throw insertError
+
+      router.push('/')
+    } catch {
       setError('상품 등록 중 오류가 발생했어요. 다시 시도해주세요.')
       setLoading(false)
-      return
     }
-
-    router.push('/')
   }
 
   const formatPrice = (value: string) => {
@@ -110,6 +122,18 @@ export default function SellPage() {
       <main className="max-w-2xl mx-auto px-4 py-6 fade-in">
         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
 
+          {/* 사진 */}
+          <div className="goguma-card p-5">
+            <label className="block text-sm font-semibold mb-3" style={{ color: 'var(--goguma-brown)' }}>
+              사진
+            </label>
+            <ImageUploader
+              state={imageState}
+              onChange={setImageState}
+              maxImages={5}
+            />
+          </div>
+
           {/* 제목 */}
           <div className="goguma-card p-5">
             <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--goguma-brown)' }}>
@@ -143,16 +167,8 @@ export default function SellPage() {
                   className="px-3 py-1.5 rounded-full text-sm font-medium border transition-colors"
                   style={
                     category === cat
-                      ? {
-                          background: 'var(--goguma-orange)',
-                          color: 'white',
-                          borderColor: 'var(--goguma-orange)',
-                        }
-                      : {
-                          background: 'white',
-                          color: 'var(--goguma-brown)',
-                          borderColor: '#E8D4B8',
-                        }
+                      ? { background: 'var(--goguma-orange)', color: 'white', borderColor: 'var(--goguma-orange)' }
+                      : { background: 'white', color: 'var(--goguma-brown)', borderColor: '#E8D4B8' }
                   }
                 >
                   {cat}
@@ -176,10 +192,7 @@ export default function SellPage() {
                 onChange={(e) => setPrice(formatPrice(e.target.value))}
                 required
               />
-              <span
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-medium"
-                style={{ color: '#B09080' }}
-              >
+              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-medium" style={{ color: '#B09080' }}>
                 원
               </span>
             </div>
